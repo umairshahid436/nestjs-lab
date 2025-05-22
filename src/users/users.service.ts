@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { BadRequestException } from '../common/exceptions/bad-request.exception';
+import { NotFoundException } from 'src/common/exceptions/not-found.exception';
 
 @Injectable()
 export class UsersService {
@@ -9,7 +11,14 @@ export class UsersService {
     @InjectRepository(User) private readonly repo: Repository<User>,
   ) {}
 
-  create({
+  async checkIfUserExists(email: string) {
+    const [alreadyExists] = await this.findByEmail(email);
+    if (alreadyExists) {
+      throw new BadRequestException('User already exists');
+    }
+    return alreadyExists;
+  }
+  async create({
     name,
     email,
     password,
@@ -18,6 +27,7 @@ export class UsersService {
     email: string;
     password: string;
   }) {
+    this.checkIfUserExists(email);
     const user = this.repo.create({ name, email, password });
     return this.repo.save(user);
   }
@@ -27,6 +37,9 @@ export class UsersService {
   }
 
   findOne(id: number) {
+    if (!id) {
+      return null;
+    }
     return this.repo.findOneBy({ id: id.toString() });
   }
 
@@ -37,7 +50,7 @@ export class UsersService {
   async update(id: string, attrs: Partial<User>) {
     const user = await this.findOne(parseInt(id));
     if (!user) {
-      return null;
+      throw new NotFoundException('user not found');
     }
     const updatedUser = { ...user, ...attrs };
     return this.repo.save(updatedUser);
@@ -46,9 +59,7 @@ export class UsersService {
   async activate(id: string) {
     const user = await this.findOne(parseInt(id));
     if (!user) {
-      return null;
-
-      //   throw new NotFoundException('user not found');
+      throw new NotFoundException('user not found');
     }
     user.isActive = true;
     return this.repo.save(user);
@@ -57,15 +68,16 @@ export class UsersService {
   async remove(id: string) {
     const user = await this.findOne(parseInt(id));
     if (!user) {
-      return null;
+      throw new NotFoundException('user not found');
     }
     if (user.isActive) {
       user.isActive = false;
       this.repo.save(user);
-      return true;
+      return {
+        message: 'user removed',
+      };
     }
-    return null;
 
-    // throw new NotFoundException('user is not active');
+    throw new BadRequestException('user is not active');
   }
 }

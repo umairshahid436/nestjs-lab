@@ -7,14 +7,11 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { map } from 'rxjs/operators';
 
-interface ClassConstructor {
-  new (...args: any[]): {};
-}
-export function Serialize(dto: ClassConstructor) {
+export function Serialize(dto: any) {
   return UseInterceptors(new SerializeInterceptor(dto));
 }
 export class SerializeInterceptor implements NestInterceptor {
-  constructor(private dto: any) {}
+  constructor(private readonly dto: any) {}
   intercept(context: ExecutionContext, handler: CallHandler) {
     return handler.handle().pipe(
       map((data: any) => {

@@ -6,22 +6,51 @@ import {
   Param,
   Delete,
   Patch,
-  NotFoundException,
+  Session,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserDto } from './dtos/user.dto';
 import { UsersService } from './users.service';
-import { Serialize } from '../interceptors/serialize.interceptors';
+import { Serialize } from '../common/interceptors/serialize.interceptors';
+import { AuthService } from './auth.service';
+import { LoginDto } from './dtos/auth.dto';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { CurrentUserInterceptor } from 'src/common/interceptors/current-user.interceptor';
+import { User } from './user.entity';
 
 @Controller('auth')
 @Serialize(UserDto)
+@UseInterceptors(CurrentUserInterceptor)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly authService: AuthService,
+  ) {}
 
   @Post('register')
-  createUser(@Body() body: CreateUserDto) {
-    return this.usersService.create(body);
+  async createUser(@Body() body: CreateUserDto, @Session() session: any) {
+    const user = await this.authService.register(body);
+    session.userId = user.id;
+    return user;
+  }
+
+  @Post('login')
+  async loginUser(@Body() body: LoginDto, @Session() session: any) {
+    const user = await this.authService.login(body);
+    session.userId = user.id;
+    return user;
+  }
+
+  @Get('whoami')
+  async whoami(@CurrentUser() user: User) {
+    return user;
+  }
+
+  @Post('logout')
+  async logout(@Session() session: any) {
+    session.userId = null;
   }
 
   @Get('getAllUsers')
@@ -30,47 +59,26 @@ export class UsersController {
   }
 
   @Get('getUserById/:id')
-  async findUser(@Param('id') id: string) {
-    const user = await this.usersService.findOne(parseInt(id));
-    if (!user) {
-      throw new NotFoundException('user not found');
-    }
-    return user;
+  findUser(@Param('id') id: string) {
+    return this.usersService.findOne(parseInt(id));
   }
   @Get('getUserByEmail/:email')
   async findUserByEmail(@Param('email') email: string) {
-    const user = await this.usersService.findByEmail(email);
-    if (!user) {
-      throw new NotFoundException('user not found');
-    }
-    return user;
+    return this.usersService.findByEmail(email);
   }
 
   @Patch('updateUser/:id')
   async updateUser(@Param('id') id: string, @Body() body: UpdateUserDto) {
-    const user = await this.usersService.update(id, body);
-    if (!user) {
-      throw new NotFoundException('user not found');
-    }
-    return { message: 'User updated successfully' };
+    return this.usersService.update(id, body);
   }
 
   @Patch('activateUser/:id')
   async activateUser(@Param('id') id: string) {
-    const user = await this.usersService.activate(id);
-    if (!user) {
-      throw new NotFoundException('user not found');
-    }
-
-    return { message: 'User activated successfully' };
+    return this.usersService.activate(id);
   }
 
   @Delete('deleteUser/:id')
   async deleteUser(@Param('id') id: string) {
-    const user = await this.usersService.remove(id);
-    if (!user) {
-      throw new NotFoundException('user not found');
-    }
-    return { message: 'User deleted successfully' };
+    return this.usersService.remove(id);
   }
 }
