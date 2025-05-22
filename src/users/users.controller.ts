@@ -4,11 +4,16 @@ import {
   Body,
   Get,
   Param,
-  Put,
   Delete,
+  Patch,
+  NotFoundException,
+  UseInterceptors,
 } from '@nestjs/common';
-import { CreateUserDto, UpdateUserDto } from './dtos/create-user.dto';
+import { CreateUserDto } from './dtos/create-user.dto';
+import { UpdateUserDto } from './dtos/update-user.dto';
+import { UserDto } from './dtos/user.dto';
 import { UsersService } from './users.service';
+import { SerializeInterceptor } from '../interceptors/serialize.interceptors';
 
 @Controller('auth')
 export class UsersController {
@@ -24,28 +29,50 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @UseInterceptors(new SerializeInterceptor(UserDto))
   @Get('getUserById/:id')
-  findUser(@Param('id') id: string) {
-    return this.usersService.findOne(parseInt(id));
+  async findUser(@Param('id') id: string) {
+    const user = await this.usersService.findOne(parseInt(id));
+    if (!user) {
+      throw new NotFoundException('user not found');
+    }
+    return user;
   }
-
+  @UseInterceptors(new SerializeInterceptor(UserDto))
   @Get('getUserByEmail/:email')
-  findUserByEmail(@Param('email') email: string) {
-    return this.usersService.findByEmail(email);
+  async findUserByEmail(@Param('email') email: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('user not found');
+    }
+    return user;
   }
 
-  @Put('updateUser/:id')
-  updateUser(@Param('id') id: string, @Body() body: UpdateUserDto) {
-    return this.usersService.update(id, body);
+  @Patch('updateUser/:id')
+  async updateUser(@Param('id') id: string, @Body() body: UpdateUserDto) {
+    const user = await this.usersService.update(id, body);
+    if (!user) {
+      throw new NotFoundException('user not found');
+    }
+    return { message: 'User updated successfully' };
   }
 
-  @Put('activateUser/:id')
-  activateUser(@Param('id') id: string) {
-    return this.usersService.activate(id);
+  @Patch('activateUser/:id')
+  async activateUser(@Param('id') id: string) {
+    const user = await this.usersService.activate(id);
+    if (!user) {
+      throw new NotFoundException('user not found');
+    }
+
+    return { message: 'User activated successfully' };
   }
 
   @Delete('deleteUser/:id')
-  deleteUser(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  async deleteUser(@Param('id') id: string) {
+    const user = await this.usersService.remove(id);
+    if (!user) {
+      throw new NotFoundException('user not found');
+    }
+    return { message: 'User deleted successfully' };
   }
 }
