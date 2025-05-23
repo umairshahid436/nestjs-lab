@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { UsersService } from './users.service';
 import { User } from './user.entity';
-import { BadRequestException } from '../common/exceptions/bad-request.exception';
+import { BadRequestException } from '../../common/exceptions/bad-request.exception';
 
 describe('AuthService', () => {
   let service: AuthService;
