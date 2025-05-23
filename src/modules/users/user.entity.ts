@@ -6,7 +6,9 @@ import {
   AfterInsert,
   AfterUpdate,
   AfterRemove,
+  OneToMany,
 } from 'typeorm';
+import { Report } from '../reports/report.entity';
 
 @Entity()
 export class User {
@@ -24,6 +26,9 @@ export class User {
   updatedAt: Date;
   @Column({ default: true })
   isActive: boolean;
+
+  @OneToMany((x) => Report, (report) => report.user)
+  reports: Report[];
 
   @AfterInsert()
   logInsert() {

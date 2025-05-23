@@ -32,7 +32,6 @@ export class UsersController {
   @Post('register')
   async createUser(@Body() body: CreateUserDto, @Session() session: any) {
     const user = await this.authService.register(body);
-    session.userId = user.id;
     return user;
   }
 

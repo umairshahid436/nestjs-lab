@@ -3,7 +3,9 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   CreateDateColumn,
+  ManyToOne,
 } from 'typeorm';
+import { User } from '../users/user.entity';
 
 @Entity()
 export class Report {
@@ -29,4 +31,7 @@ export class Report {
   updatedAt: Date;
   @Column({ default: true })
   isActive: boolean;
+
+  @ManyToOne(() => User, (user) => user.reports)
+  user: User;
 }
