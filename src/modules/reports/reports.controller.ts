@@ -13,8 +13,10 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get()
-  findAll() {
-    this.reportsService.findAll();
+  async findAll() {
+    const reports = await this.reportsService.findAll();
+    console.log(reports);
+    return reports;
   }
 
   @Post()

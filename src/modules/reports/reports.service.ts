@@ -12,8 +12,9 @@ export class ReportsService {
     private readonly reportRepository: Repository<Report>,
   ) {}
 
-  findAll() {
-    return this.reportRepository.find();
+  async findAll() {
+    const reports = await this.reportRepository.find();
+    return reports;
   }
   createReport(reportDto: CreateReportDto, user: User) {
     const report = this.reportRepository.create(reportDto as Report);
