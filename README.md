@@ -49,8 +49,6 @@ PORT=3001
 # Development
 $ npm run start:dev
 
-# Production
-$ npm run start:prod
 ```
 
 ## Test
